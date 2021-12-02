@@ -1,0 +1,37 @@
+{
+  "name": "@ceajs/slider-captcha",
+  "version": "0.0.0",
+  "description": "A slider captcha helper to cea",
+  "node": "^12.20.0 || ^14.13.1 || >=16.0.0",
+  "types": "./src/index.d.ts",
+  "exports": "./src/index.js",
+  "files": [
+    "src/**/*.[tj]s",
+    "template.png"
+  ],
+  "type": "module",
+  "scripts": {
+    "pub-test": "npm pack --json --dry-run",
+    "pub": "npm publish --tag cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ceajs/slide-captcha.git"
+  },
+  "keywords": [
+    "slide-captcha"
+  ],
+  "author": "beetcb",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ceajs/slide-captcha/issues"
+  },
+  "homepage": "https://github.com/ceajs/slide-captcha#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.17.1"
+  },
+  "dependencies": {
+    "jimp": "^0.16.1",
+    "opencv-wasm": "^4.3.0-10"
+  }
+}
