@@ -69,23 +69,23 @@ export async function findMovePercent(
     const matchOriginPoint = contours.get(0).data32S
     movePercent =
       matchOriginPoint[0] / captchaImg.getWidth()
-    printRec(test, dstTempl, matchOriginPoint)
+    // printRec(test, dstTempl, matchOriginPoint)
   } else {
     console.error(
       `Error: Recognizing slider ${n ?? 'test'}`
     )
   }
 
-  new Jimp({
-    width: test.cols,
-    height: test.rows,
-    data: Buffer.from(test.data),
-  }).write(
-    path.join(
-      __dirname,
-      `../processed-img/${n ?? 'test'}.png`
-    )
-  )
+  //   new Jimp({
+  //     width: test.cols,
+  //     height: test.rows,
+  //     data: Buffer.from(test.data),
+  //   }).write(
+  //     path.join(
+  //       __dirname,
+  //       `../processed-img/${n ?? 'test'}.png`
+  //     )
+  //   )
 
   return movePercent
 }
