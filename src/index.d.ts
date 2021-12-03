@@ -5,7 +5,7 @@
  * @param n alias for test purpose
  * @return Percentage of moving slider
  */
-export function findMovePercent(
+export default function sliderCaptchaRecognizer(
   bigImage: string,
   smallImage: string,
   n?: string

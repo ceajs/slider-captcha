@@ -8,7 +8,7 @@ const __dirname = path.dirname(
   fileURLToPath(import.meta.url)
 )
 
-export async function findMovePercent(
+export default async function sliderCaptchaRecognizer(
   bigImage,
   smallImage,
   n

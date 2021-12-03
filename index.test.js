@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
-import { findMovePercent } from './index.js'
-let peakTestInterval = 1000
+import sliderCaptchaRecognizer from './src/index.js'
+
+const peakTestInterval = 1000
 
 test.describe.parallel('Verify Captcha', () => {
   for (let i = 0; i < peakTestInterval; i++) {
@@ -29,7 +30,7 @@ test.describe.parallel('Verify Captcha', () => {
         '**/sliderCaptcha.do**'
       )
       const data = await response.json()
-      const movePercent = await findMovePercent(
+      const movePercent = await sliderCaptchaRecognizer(
         data.bigImage,
         data.smallImage,
         i.toString()
