@@ -5,8 +5,8 @@
  * @param n alias for test purpose
  * @return Percentage of moving slider
  */
-export async function findMovePercent(
+export function findMovePercent(
   bigImage: string,
   smallImage: string,
   n?: string
-): Promise<number | void> {}
+): Promise<number | void>

@@ -15,7 +15,7 @@ Playwright test result(Tested by simulating the unified login of [hqu University
 
 Running 1000 tests using 4 workers
   ...
-  837 passed (26m)
+  858 passed (21m)
 ```
 
 [cea]: https://github.com/ceajs/cea/issues/25
