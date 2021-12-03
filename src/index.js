@@ -1,12 +1,9 @@
-import Jimp from 'jimp'
+import fs from 'fs'
+import sharp from 'sharp'
 import opencv from 'opencv-wasm'
-import path from 'path'
-import { fileURLToPath } from 'url'
-
 const { cv } = opencv
-const __dirname = path.dirname(
-  fileURLToPath(import.meta.url)
-)
+
+const THRESH_TRUNC = 242
 
 export default async function sliderCaptchaRecognizer(
   bigImage,
@@ -16,43 +13,34 @@ export default async function sliderCaptchaRecognizer(
   const pngBufBig = Buffer.from(bigImage, 'base64')
   const pngBufSmall = Buffer.from(smallImage, 'base64')
 
-  const captchaImg = (
-    await Jimp.read(pngBufBig)
-  ).grayscale()
+  const templImgIns = sharp(pngBufSmall).ensureAlpha()
 
-  const templImg = (
-    await Jimp.read(
-      path.resolve(__dirname, '../template.png')
+  const { data: captchaImg, info: captchaImgInfo } =
+    await sharp(pngBufBig)
+      .ensureAlpha()
+      .threshold(THRESH_TRUNC)
+      .raw()
+      .toBuffer({ resolveWithObject: true })
+  const { data: templImg, info: templImgInfo } = await (
+    await cropSlider(
+      templImgIns,
+      await templImgIns.metadata()
     )
-  ).resize(
-    (await Jimp.read(pngBufSmall)).getWidth(),
-    Jimp.AUTO
   )
+    .threshold(THRESH_TRUNC)
+    .raw()
+    .toBuffer({ resolveWithObject: true })
 
-  const src = new cv.matFromImageData(captchaImg.bitmap)
-  const templ = new cv.matFromImageData(templImg.bitmap)
-
-  const [srcProcessed, templProcessed] = [
-    new cv.Mat(),
-    new cv.Mat(),
-  ]
+  const srcProcessed = new cv.matFromImageData({
+    ...captchaImgInfo,
+    data: captchaImg,
+  })
+  const templProcessed = new cv.matFromImageData({
+    ...templImgInfo,
+    data: templImg,
+  })
 
   const mask = new cv.Mat()
-
-  cv.threshold(
-    src,
-    srcProcessed,
-    241,
-    255,
-    cv.THRESH_BINARY
-  )
-  cv.threshold(
-    templ,
-    templProcessed,
-    60,
-    255,
-    cv.THRESH_BINARY
-  )
 
   const matchResult = new cv.Mat()
   cv.matchTemplate(
@@ -78,15 +66,66 @@ export default async function sliderCaptchaRecognizer(
   let movePercent
   if (contours.size()) {
     const matchOriginPoint = contours.get(0).data32S
-    movePercent =
-      matchOriginPoint[0] / captchaImg.getWidth()
+    movePercent = matchOriginPoint[0] / captchaImgInfo.width
+    if (process.env.SAVE_IMG) {
+      printRec(
+        srcProcessed,
+        templProcessed,
+        matchOriginPoint
+      )
+    }
   } else {
     console.error(
       `Error: Recognizing slider ${n ?? 'test'}`
     )
   }
 
+  if (process.env.SAVE_IMG) {
+    saveProcessedImg(srcProcessed, {
+      ...captchaImgInfo,
+      fileName: `${n}-srcProcessed.png`,
+    })
+    saveProcessedImg(templProcessed, {
+      ...templImgInfo,
+      fileName: `${n}-templProcessed.png`,
+    })
+  }
+
   return movePercent
+}
+
+async function cropSlider(imageIns, imageInfo) {
+  const { width, height } = imageInfo
+  const data = await imageIns.raw().toBuffer()
+
+  let cropY = 0
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      const idx = 4 * (r * width + c)
+      const rgba = [
+        data[idx],
+        data[idx + 1],
+        data[idx + 2],
+        data[idx + 3],
+      ]
+
+      const isNotTransparent = rgba.some((e) => e !== 0)
+      if (isNotTransparent) {
+        cropY--
+        r = height
+        break
+      }
+    }
+    cropY++
+  }
+  const croppedIns = imageIns.extract({
+    left: 0,
+    top: cropY,
+    width: width,
+    height: width,
+  })
+
+  return croppedIns
 }
 
 function printRec(srcProcessed, templProcessed, point) {
@@ -107,4 +146,16 @@ function printRec(srcProcessed, templProcessed, point) {
     cv.LINE_8,
     0
   )
+}
+
+function saveProcessedImg(processedMat, info) {
+  const folder = 'processed-img'
+  if (!fs.existsSync(folder)) {
+    fs.mkdirSync(folder)
+  }
+  sharp(Buffer.from(processedMat.data), {
+    raw: {
+      ...info,
+    },
+  }).toFile(`${folder}/${info.fileName}`)
 }

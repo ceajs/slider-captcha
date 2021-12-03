@@ -6,8 +6,7 @@
   "types": "./src/index.d.ts",
   "exports": "./src/index.js",
   "files": [
-    "src/**/*.[tj]s",
-    "template.png"
+    "src/**/*.[tj]s"
   ],
   "type": "module",
   "scripts": {
@@ -31,7 +30,7 @@
     "@playwright/test": "^1.17.1"
   },
   "dependencies": {
-    "jimp": "^0.16.1",
-    "opencv-wasm": "^4.3.0-10"
+    "opencv-wasm": "^4.3.0-10",
+    "sharp": "^0.29.3"
   }
 }
