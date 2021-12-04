@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "pub-test": "npm pack --json --dry-run",
-    "pub": "npm publish --tag cjs"
+    "pub": "npm publish --access=public"
   },
   "repository": {
     "type": "git",

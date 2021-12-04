@@ -2,6 +2,10 @@
 
 No need for the original image, `@ceajs/slider-captcha` will get the slider target position by processing the slider background image [status: WIP]
 
+```bash
+npm i @ceajs/slider-captcha
+```
+
 # Demo
 
 ![demo gif](./demo.gif)
