@@ -75,9 +75,7 @@ export default async function sliderCaptchaRecognizer(
       )
     }
   } else {
-    console.error(
-      `Error: Recognizing slider ${n ?? 'test'}`
-    )
+    return
   }
 
   if (process.env.SAVE_IMG) {

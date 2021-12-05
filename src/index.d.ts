@@ -9,4 +9,4 @@ export default function sliderCaptchaRecognizer(
   bigImage: string,
   smallImage: string,
   n?: string
-): Promise<number | void>
+): Promise<number | undefined>
