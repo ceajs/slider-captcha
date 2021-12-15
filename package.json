@@ -11,7 +11,9 @@
   "type": "module",
   "scripts": {
     "pub-test": "npm pack --json --dry-run",
-    "pub": "npm publish --access=public"
+    "pub": "npm publish --access=public",
+    "test": "playwright test",
+    "postinstall": "playwright install"
   },
   "repository": {
     "type": "git",
@@ -30,7 +32,6 @@
     "@playwright/test": "^1.17.1"
   },
   "dependencies": {
-    "opencv-wasm": "^4.3.0-10",
     "sharp": "^0.29.3"
   }
 }

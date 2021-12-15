@@ -1,159 +1,69 @@
-import fs from 'fs'
-import sharp from 'sharp'
-import opencv from 'opencv-wasm'
-const { cv } = opencv
 
-const THRESH_TRUNC = 242
+import fs from 'fs';
+import sharp from 'sharp';
 
-export default async function sliderCaptchaRecognizer(
-  bigImage,
-  smallImage,
-  n
-) {
-  const pngBufBig = Buffer.from(bigImage, 'base64')
-  const pngBufSmall = Buffer.from(smallImage, 'base64')
+let globalN = 0
+const folder = 'processed-img'
 
-  const templImgIns = sharp(pngBufSmall).ensureAlpha()
+if (process.env.SAVE_IMG) {
 
-  const { data: captchaImg, info: captchaImgInfo } =
-    await sharp(pngBufBig)
-      .ensureAlpha()
-      .threshold(THRESH_TRUNC)
-      .raw()
-      .toBuffer({ resolveWithObject: true })
-  const { data: templImg, info: templImgInfo } = await (
-    await cropSlider(
-      templImgIns,
-      await templImgIns.metadata()
-    )
-  )
-    .threshold(THRESH_TRUNC)
-    .raw()
-    .toBuffer({ resolveWithObject: true })
-
-  const srcProcessed = new cv.matFromImageData({
-    ...captchaImgInfo,
-    data: captchaImg,
-  })
-  const templProcessed = new cv.matFromImageData({
-    ...templImgInfo,
-    data: templImg,
-  })
-
-  const mask = new cv.Mat()
-
-  const matchResult = new cv.Mat()
-  cv.matchTemplate(
-    srcProcessed,
-    templProcessed,
-    matchResult,
-    cv.TM_CCOEFF_NORMED,
-    mask
-  )
-  matchResult.convertTo(matchResult, cv.CV_8UC1)
-  const [contours, hierarchy] = [
-    new cv.MatVector(),
-    new cv.Mat(),
-  ]
-  cv.findContours(
-    matchResult,
-    contours,
-    hierarchy,
-    cv.RETR_CCOMP,
-    cv.CHAIN_APPROX_SIMPLE
-  )
-
-  let movePercent
-  if (contours.size()) {
-    const matchOriginPoint = contours.get(0).data32S
-    movePercent = matchOriginPoint[0] / captchaImgInfo.width
-    if (process.env.SAVE_IMG) {
-      printRec(
-        srcProcessed,
-        templProcessed,
-        matchOriginPoint
-      )
-    }
-  } else {
-    return
-  }
-
-  if (process.env.SAVE_IMG) {
-    saveProcessedImg(srcProcessed, {
-      ...captchaImgInfo,
-      fileName: `${n}-srcProcessed.png`,
-    })
-    saveProcessedImg(templProcessed, {
-      ...templImgInfo,
-      fileName: `${n}-templProcessed.png`,
-    })
-  }
-
-  return movePercent
-}
-
-async function cropSlider(imageIns, imageInfo) {
-  const { width, height } = imageInfo
-  const data = await imageIns.raw().toBuffer()
-
-  let cropY = 0
-  for (let r = 0; r < height; r++) {
-    for (let c = 0; c < width; c++) {
-      const idx = 4 * (r * width + c)
-      const rgba = [
-        data[idx],
-        data[idx + 1],
-        data[idx + 2],
-        data[idx + 3],
-      ]
-
-      const isNotTransparent = rgba.some((e) => e !== 0)
-      if (isNotTransparent) {
-        cropY--
-        r = height
-        break
-      }
-    }
-    cropY++
-  }
-  const croppedIns = imageIns.extract({
-    left: 0,
-    top: cropY,
-    width: width,
-    height: width,
-  })
-
-  return croppedIns
-}
-
-function printRec(srcProcessed, templProcessed, point) {
-  const x = point[0]
-  const y = point[1]
-  const color = new cv.Scalar(0, 255, 0, 255)
-  const pointA = new cv.Point(x, y)
-  const pointB = new cv.Point(
-    x + templProcessed.cols,
-    y + templProcessed.rows
-  )
-  cv.rectangle(
-    srcProcessed,
-    pointA,
-    pointB,
-    color,
-    2,
-    cv.LINE_8,
-    0
-  )
-}
-
-function saveProcessedImg(processedMat, info) {
-  const folder = 'processed-img'
   if (!fs.existsSync(folder)) {
     fs.mkdirSync(folder)
   }
-  sharp(Buffer.from(processedMat.data), {
-    raw: {
-      ...info,
-    },
-  }).toFile(`${folder}/${info.fileName}`)
+}
+
+export default async function sliderCaptchaRecognizer(
+	bigImage,
+	smallImage,
+	n,
+) {
+	const [bigImageBuffer, smallImageBuffer] = [bigImage, smallImage].map((image) => Buffer.from(image, 'base64'))
+	const [bigImageSharp, smallImageSharp] = [
+		sharp(bigImageBuffer).ensureAlpha(1),
+		sharp(smallImageBuffer),
+	]
+
+	const [{ data: bigImageData, info: bigImageMetaInfo }, { data: smallImageData, info: smallImageMetaInfo }] = [
+		await bigImageSharp.raw().toBuffer({ resolveWithObject: true }),
+		await smallImageSharp.raw().toBuffer({ resolveWithObject: true }),
+	]
+
+	const sliderBoundaries = []
+	traverseArrayBuffer(smallImageData, smallImageMetaInfo, ([[x, y], [r, g, b]]) => {
+		if (r === 255 && g === 255 && b === 255) {
+			sliderBoundaries.push([x, y])
+		}
+	})
+
+	const results = []
+	for (let offset = 0; offset <= (bigImageMetaInfo.width - smallImageMetaInfo.width); offset++) {
+		const deltaWithWhite = sliderBoundaries.map(([x, y]) => {
+			const index = 4 * (y * bigImageMetaInfo.width + x + offset)
+			return [0, 1, 2].map((i) => (255 - bigImageData[index + i])).reduce((acc, cur) => acc + cur, 0)
+		}).reduce((acc, cur) => acc + cur, 0)
+
+		results.push([deltaWithWhite, offset])
+	}
+
+	const argMin = results.reduce((r, a) => (a[0] < r[0] ? a : r))[1]
+	const movePercent = argMin / bigImageMetaInfo.width
+
+	if (process.env.SAVE_IMG) {
+		sharp(bigImageData, { raw: bigImageMetaInfo }).composite([{
+			input: smallImageData,
+			top: 0,
+			left: argMin,
+			raw: smallImageMetaInfo,
+		}]).toFile(`${folder}/${n ?? (++globalN)}-combined.png`)
+	}
+	return movePercent
+}
+
+function traverseArrayBuffer(imageData, { width, height }, callback) {
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			const idx = 4 * (y * width + x)
+			callback([[x, y], [0, 1, 2, 3].map((i) => imageData[idx + i])])
+		}
+	}
 }
