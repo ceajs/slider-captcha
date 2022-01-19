@@ -17,9 +17,9 @@ Playwright test result(Tested by simulating the unified login of [hqu University
 ```bash
 > npx playwright test
 
-Running 10000 tests using 4 workers
-  ...
-  7801 passed (48m)
+Running 1000 tests using 4 workers
+  60 failed
+  940 passed (11m)
 ```
 
 [cea]: https://github.com/ceajs/cea/issues/25
