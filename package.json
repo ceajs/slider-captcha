@@ -1,6 +1,6 @@
 {
   "name": "@ceajs/slider-captcha",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A slider captcha helper to cea",
   "node": "^12.20.0 || ^14.13.1 || >=16.0.0",
   "types": "./src/index.d.ts",
@@ -12,8 +12,7 @@
   "scripts": {
     "pub-test": "npm pack --json --dry-run",
     "pub": "npm publish --access=public",
-    "test": "playwright test",
-    "postinstall": "playwright install"
+    "test": "playwright test" 
   },
   "repository": {
     "type": "git",
