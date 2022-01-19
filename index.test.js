@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import sliderCaptchaRecognizer from './src/index.js'
 
 const peakTestInterval = 1000
