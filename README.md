@@ -1,6 +1,6 @@
 # Silder Captcha Recognition Helper for [Cea][cea]
 
-No need for the original image, `@ceajs/slider-captcha` will get the slider target position by processing the slider background image [status: WIP]
+No need for the original image, `@ceajs/slider-captcha` will get the slider target position by processing the slider background image [status: MVP]
 
 ```bash
 npm i @ceajs/slider-captcha
